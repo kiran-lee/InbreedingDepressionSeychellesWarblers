@@ -1,0 +1,35 @@
+"0",""
+"0","PilotSequences <- PilotSequences %>% "
+"0","  left_join(select(PilotIdentifiers, BloodID, BloodTubeNumber), by = c(""ID"" = ""BloodTubeNumber""))"
+"0","PilotSequences <- PilotSequences %>% "
+"0","  left_join(select(PilotIdentifiers, BirdID, BloodTubeNumber), by = c(""ID"" = ""BloodTubeNumber""))"
+"0",""
+"0","BloodIDSequences$BloodID<-BloodIDSequences$ID"
+"0","BloodIDSequences <- BloodIDSequences %>% "
+"0","  left_join(select(Identifiers, BirdID, BloodID), by = c(""ID"" = ""BloodID""))"
+"2","Warning in left_join(., select(Identifiers, BirdID, BloodID), by = c(ID = ""BloodID"")) :"
+"2","
+ "
+"2"," [38;5;232mDetected an unexpected many-to-many relationship between `x`
+and `y`.
+[36mℹ[38;5;232m Row 313 of `x` matches multiple rows in `y`.
+[36mℹ[38;5;232m Row 881 of `y` matches multiple rows in `x`.
+[36mℹ[38;5;232m If a many-to-many relationship is expected, set
+  `relationship = ""many-to-many""` to silence this warning.[39m
+"
+"0","MissingBloodIDSequences <- MissingBloodIDSequences %>% "
+"0","  left_join(select(Identifiers26076, Sample_number, BloodID), by = c(""ID"" = ""Sample_number""))"
+"0","MissingBloodIDSequences <- MissingBloodIDSequences %>% "
+"0","  left_join(select(Identifiers, BirdID, BloodID), by = c(""BloodID"" = ""BloodID""))"
+"0",""
+"0","##Concatenate into one file (1861 individuals)"
+"0","SequencedIndividuals=rbind(PilotSequences,MissingBloodIDSequences,BloodIDSequences)"
+"0",""
+"0","##Remove rows that are exact duplicates (leaves 1852 individuals)"
+"0","SequencedIndividuals<-SequencedIndividuals[!duplicated(SequencedIndividuals),]"
+"0",""
+"0","##Compare differences in manually getting BirdID to this method"
+"0","SequencedIndividuals$BirdIDDifferences<-ifelse(SequencedIndividuals$BirdID==SequencedIndividuals$ManualBirdID, ""No"",""Yes"")"
+"0","SequencedIndividuals %>% "
+"0","    group_by(BirdIDDifferences) %>% "
+"0","    count()"

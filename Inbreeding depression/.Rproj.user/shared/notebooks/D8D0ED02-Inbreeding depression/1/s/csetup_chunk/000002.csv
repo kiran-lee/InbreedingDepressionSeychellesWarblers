@@ -1,0 +1,4 @@
+"0","library(knitr)"
+"0","knitr::opts_chunk$set(echo = TRUE)"
+"0","knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)"
+"0",""

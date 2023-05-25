@@ -1,0 +1,28 @@
+"0","##Read files"
+"0","BirthDate <- read_csv(""./Data/BirthDate27032023.csv"", col_types = cols(BirthDate = col_date(format = ""%d/%m/%Y""))) #In query table, this is BirdID"
+"0","LastSeenYear <- read_csv(""./Data/CurrentBTOextended27032023.csv"") #In query table, this is CurrentBTOextended"
+"1","[1mRows: [22m[34m6423[39m [1mColumns: [22m[34m5[39m
+"
+"1","[36m──[39m [1mColumn specification[22m [36m─────────────────────────────────[39m
+[1mDelimiter:[22m "",""
+[31mchr[39m (1): BTO
+[32mdbl[39m (4): BirdID, RingYear, LastSeenYea, BTOcount
+"
+"1","
+[36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
+[36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message.
+"
+"0","##Make terms"
+"0","###BirthYear from BirthDate"
+"0","BirthDate <- BirthDate %>% "
+"0","  mutate(BirthYear = format(BirthDate, ""%Y"")) %>%"
+"0","  mutate(BirthYear = as.numeric(BirthYear))"
+"0","###Lifespan"
+"0","Lifespan <- merge(BirthDate,LastSeenYear,by=""BirdID"", all = TRUE) %>% "
+"0","  mutate(LastSeenYea = as.numeric(LastSeenYea)) %>%"
+"0","  mutate(Lifespan = LastSeenYea - BirthYear) %>%"
+"0","  filter(LastSeenYea < 2022)  %>%"
+"0","  select(BirdID,Lifespan,LastSeenYea) "
+"0","#filter set at 2022, because the definition of alive/dead is an individual has not been observed for two consecutive fieldseasons. Hence, next year, can change this to 2023."
+"0",""
+"0","SequencedIndividuals<- merge(SequencedIndividuals, Lifespan, by=""BirdID"", all = FALSE)"

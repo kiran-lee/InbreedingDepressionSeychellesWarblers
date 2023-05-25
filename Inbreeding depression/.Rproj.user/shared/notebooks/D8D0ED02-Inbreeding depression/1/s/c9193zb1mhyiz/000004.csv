@@ -1,0 +1,38 @@
+"0","SequencedIndividuals<-read_excel(""./Data/FROH_SW_final.xlsx"")"
+"0","SequencedIndividuals$SeqID<-SequencedIndividuals$ID"
+"0","SequencedIndividuals<-SequencedIndividuals %>%"
+"0","  rename(""ManualBirdID""=""BirdID"") "
+"0",""
+"0","Identifiers<-read_excel(""./Data/SheffieldSubmissions.xlsx"")"
+"2","Warning:"
+"2"," Expecting logical in Y1665 / R1665C25: got 'Y'
+"
+"2","Warning:"
+"2"," Expecting numeric in D1670 / R1670C4: got 'X197X; used 167'
+"
+"2","Warning:"
+"2"," Expecting numeric in R1681 / R1681C18: got '>300'
+"
+"2","Warning:"
+"2"," Expecting logical in Y1725 / R1725C25: got 'Y'
+"
+"2","Warning:"
+"2"," Expecting logical in Y1728 / R1728C25: got 'Y'
+"
+"2","Warning:"
+"2"," Expecting logical in Y1832 / R1832C25: got 'Y'
+"
+"2","Warning:"
+"2"," Expecting numeric in W1949 / R1949C23: got 'Y'
+"
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...14`[39m
+"
+"0","Identifiers26076<-read_excel(""./Data/ID 26076_Sample information table.xlsx"")"
+"0","PilotIdentifiers<-read_excel(""./Data/SamplesForPilotTargetCapture_290119_sortBTN_Qubit.xlsx"")"
+"1","[38;5;232mNew names:
+[36m•[38;5;232m `` -> `...4`
+[36m•[38;5;232m `` -> `...17`
+[36m•[38;5;232m `` -> `...18`
+[36m•[38;5;232m `` -> `...19`[39m
+"

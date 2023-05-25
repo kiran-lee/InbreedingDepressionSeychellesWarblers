@@ -1,0 +1,147 @@
+---
+title: "Inbreeding depression Seychelles warblers"
+author: "Kiran Gok Lune Lee"
+date: "`r Sys.Date()`"
+geometry: margin=2cm 
+output:
+  pdf_document:
+    latex_engine: xelatex
+    fig_width: 8
+    fig_height: 6
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+    fig_width: 12
+    fig_height: 10
+
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+
+```
+## Install and load packages
+
+```{r eval = FALSE, echo = TRUE}
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(readxl)
+library(ggplot2)
+library("data.table") 
+```
+## Load data
+```{r eval = TRUE, echo = FALSE}
+SequencedIndividuals<-read_excel("./Data/FROH_SW_final.xlsx")
+SequencedIndividuals$SeqID<-SequencedIndividuals$ID
+SequencedIndividuals<-SequencedIndividuals %>%
+  rename("ManualBirdID"="BirdID") 
+
+Identifiers<-read_excel("./Data/SheffieldSubmissions.xlsx")
+Identifiers26076<-read_excel("./Data/ID 26076_Sample information table.xlsx")
+PilotIdentifiers<-read_excel("./Data/SamplesForPilotTargetCapture_290119_sortBTN_Qubit.xlsx")
+
+```
+##Tidy data
+```{r eval = TRUE, echo = FALSE}
+##Clean ID numbers
+
+PilotSequences<-subset(SequencedIndividuals, SequencedIndividuals$Plate=="LIMS24675"|SequencedIndividuals$Plate=="LIMS25133")
+PilotSequences$ID<-trimws(sapply(strsplit(PilotSequences$ID, "_"), `[[`, 2))
+MissingBloodIDSequences<-subset(SequencedIndividuals, SequencedIndividuals$Plate == "LIMS26076p4"|SequencedIndividuals$Plate == "LIMS26076raw")
+MissingBloodIDSequences$ID<-as.numeric(sapply(strsplit(MissingBloodIDSequences$ID, "_"), "[[", 1))
+BloodIDSequences<-subset(SequencedIndividuals, SequencedIndividuals$Plate!="LIMS24675"& SequencedIndividuals$Plate!="LIMS25133"&SequencedIndividuals$Plate != "LIMS26076p4"&SequencedIndividuals$Plate != "LIMS26076raw" )
+BloodIDSequences$ID<-BloodIDSequences$ID <- sub('_repeat','',BloodIDSequences$ID)
+BloodIDSequences$ID<-BloodIDSequences$ID <- sub('-repeat','',BloodIDSequences$ID)
+BloodIDSequences$ID<-trimws(sapply(strsplit(BloodIDSequences$ID, "_"), `[[`, 1))
+BloodIDSequences$ID<-sub('.+-(.+)', '\\1', BloodIDSequences$ID)
+
+##Pilot sequences use Blood Tube Number, the rest use BloodID
+PilotSequences$Identifier<-paste("BloodTubeNumber")
+MissingBloodIDSequences$Identifier<-paste("BloodID")
+BloodIDSequences$Identifier<-paste("BloodID")
+
+##Make IDs numeric
+PilotSequences$ID<-as.numeric(PilotSequences$ID)
+BloodIDSequences$ID<-as.numeric(BloodIDSequences$ID)
+MissingBloodIDSequences$ID<-as.numeric(MissingBloodIDSequences$ID)
+Identifiers26076$Sample_number<-as.numeric(Identifiers26076$`Sample number`)
+Identifiers26076$BloodID<-as.numeric(Identifiers26076$`Sample name`)
+
+```
+## Join BirdIDs
+```{r eval = TRUE, echo = FALSE}
+
+PilotSequences <- PilotSequences %>% 
+  left_join(select(PilotIdentifiers, BloodID, BloodTubeNumber), by = c("ID" = "BloodTubeNumber"))
+PilotSequences <- PilotSequences %>% 
+  left_join(select(PilotIdentifiers, BirdID, BloodTubeNumber), by = c("ID" = "BloodTubeNumber"))
+
+BloodIDSequences$BloodID<-BloodIDSequences$ID
+BloodIDSequences <- BloodIDSequences %>% 
+  left_join(select(Identifiers, BirdID, BloodID), by = c("ID" = "BloodID"))
+
+MissingBloodIDSequences <- MissingBloodIDSequences %>% 
+  left_join(select(Identifiers26076, Sample_number, BloodID), by = c("ID" = "Sample_number"))
+MissingBloodIDSequences <- MissingBloodIDSequences %>% 
+  left_join(select(Identifiers, BirdID, BloodID), by = c("BloodID" = "BloodID"))
+
+##Concatenate into one file (1861 individuals)
+SequencedIndividuals=rbind(PilotSequences,MissingBloodIDSequences,BloodIDSequences)
+
+##Remove rows that are exact duplicates (leaves 1852 individuals)
+SequencedIndividuals<-SequencedIndividuals[!duplicated(SequencedIndividuals),]
+
+##Compare differences in manually getting BirdID to this method
+SequencedIndividuals$BirdIDDifferences<-ifelse(SequencedIndividuals$BirdID==SequencedIndividuals$ManualBirdID, "No","Yes")
+SequencedIndividuals %>% 
+    group_by(BirdIDDifferences) %>% 
+    count()
+##Look for duplicated BirdIDs
+n_occur <- data.frame(table(SequencedIndividuals$BirdID))
+duplicates<-n_occur[n_occur$Freq > 1,]
+
+##For duplicate BirdIDs of same BloodID, remove the one that failed
+
+##For duplicate BirdIDs of same BloodID that did not fail, take the average of both
+
+write.csv(SequencedIndividuals, "BirdIDs.csv", row.names=FALSE)
+
+```
+#Inbreeding and lifespan
+##Get lifespan of birds. Repeat this but for field season date to get more accurate lifespan?
+
+```{r eval = TRUE, echo = FALSE}
+##Read files
+BirthDate <- read_csv("./Data/BirthDate27032023.csv", col_types = cols(BirthDate = col_date(format = "%d/%m/%Y"))) #In query table, this is BirdID
+LastSeenYear <- read_csv("./Data/CurrentBTOextended27032023.csv") #In query table, this is CurrentBTOextended
+##Make terms
+###BirthYear from BirthDate
+BirthDate <- BirthDate %>% 
+  mutate(BirthYear = format(BirthDate, "%Y")) %>%
+  mutate(BirthYear = as.numeric(BirthYear))
+###Lifespan
+Lifespan <- merge(BirthDate,LastSeenYear,by="BirdID", all = TRUE) %>% 
+  mutate(LastSeenYea = as.numeric(LastSeenYea)) %>%
+  mutate(Lifespan = LastSeenYea - BirthYear) %>%
+  filter(LastSeenYea < 2022)  %>%
+  select(BirdID,Lifespan,LastSeenYea) 
+#filter set at 2022, because the definition of alive/dead is an individual has not been observed for two consecutive fieldseasons. Hence, next year, can change this to 2023.
+
+SequencedIndividuals<- merge(SequencedIndividuals, Lifespan, by="BirdID", all = FALSE)
+```
+
+```{r eval = TRUE, echo = FALSE}
+##Remove failed sequences
+SequencedIndividuals<-SequencedIndividuals %>%
+  rename(FROH = F)
+SequencedIndividuals<-subset(SequencedIndividuals, SequencedIndividuals$FROH>0)
+ROHxLifespan<-ggplot(SequencedIndividuals, aes(x=FROH, y=Lifespan)) + 
+  geom_point() + 
+  geom_smooth() +
+  theme_grey(base_size = 18)
+ROHxLifespan
+```
